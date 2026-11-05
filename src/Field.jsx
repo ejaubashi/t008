@@ -110,18 +110,7 @@ export default function Field({ position, onProgress }) {
       if (dirty || moving || ripple > 0.01) {
         dirty = false;
         ctx.clearRect(0,0,width,height);
-        // Light architectural grid; it bends with the field's momentum.
-        ctx.strokeStyle = '#eaeaea'; ctx.lineWidth = 0.65;
-        const grid = width < 600 ? 95 : width / 10.1;
-        const shiftX = (x * scale * 0.14) % grid;
-        const shiftY = (y * scale * 0.14) % grid;
-        for (let gx = -grid - shiftX; gx < width + grid; gx += grid) {
-          ctx.beginPath(); ctx.moveTo(gx - velocity * 0.35,0);
-          ctx.bezierCurveTo(gx + velocity, height * 0.1, gx, height * 0.9, gx + velocity * 0.35,height); ctx.stroke();
-        }
-        for (let gy = -grid - shiftY; gy < height + grid; gy += grid) {
-          ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(width,gy); ctx.stroke();
-        }
+        // The transparent canvas reveals the shared gradient background.
         fieldLayout.forEach((item,index) => {
           const sx = (item.x - x) * scale;
           const sy = (item.y - y) * scale;

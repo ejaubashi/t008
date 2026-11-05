@@ -31,7 +31,7 @@ function TextLink({ children, href, active, ...props }) {
 }
 
 function Logo() {
-  return <a className="gallery-logo" href="#/" aria-label="Chris Williams Art gallery home"><svg viewBox="0 0 48 32" aria-hidden="true"><path d="M16 0A16 16 0 0 0 16 32Z M19 0H32L25 32Z M34 0H48L41 32Z" fill="currentColor"/></svg><span>Chris Williams<span>Art gallery</span></span></a>;
+  return <a className="gallery-logo" href="#/" aria-label="Endi Jaubashi Art gallery home"><svg viewBox="0 0 48 32" aria-hidden="true"><path d="M2 1h19v5H8v7h11v5H8v8h13v5H2Z M28 1h18v20c0 7-4 11-11 11-4 0-7-2-9-5l4-4c1 2 3 3 5 3 3 0 5-2 5-5V6H28Z" fill="currentColor"/></svg><span>Endi Jaubashi<span>Art gallery</span></span></a>;
 }
 
 function ReferenceBadges() {
@@ -108,11 +108,11 @@ function ListView({ selection }) {
 }
 
 function About() {
-  return <main className="about-view view-enter"><section className="about-intro"><p className="muted small-label">About the gallery</p><h1>Chris Williams Art Gallery<br className="wide-break"/> shows contemporary<br className="wide-break"/> painting in East London.</h1><p className="about-description">The gallery opened in 2009 and represents seven painters from the UK and Europe. It holds six solo exhibitions a year in its ground-floor space on Marlow Yard, Bethnal Green, and runs a three-month studio residency on the floor above.</p><dl className="gallery-facts">{[['Founded','2009'],['Exhibitions','54'],['Artists','7'],['Address','14 Marlow Yard, London E2']].map(([title,value])=><div key={title}><dt>{title}</dt><dd>{value}</dd></div>)}</dl></section><section className="gallery-timeline" aria-label="Gallery history">{timeline.map(([year,title,text])=><article key={year}><h2>{year}</h2><div><h3>{title}</h3><p>{text}</p></div></article>)}</section></main>;
+  return <main className="about-view view-enter"><section className="about-intro"><p className="muted small-label">About the gallery</p><h1>Endi Jaubashi Art Gallery<br className="wide-break"/> shows contemporary<br className="wide-break"/> painting in East London.</h1><p className="about-description">The gallery opened in 2009 and represents seven painters from the UK and Europe. It holds six solo exhibitions a year in its ground-floor space on Marlow Yard, Bethnal Green, and runs a three-month studio residency on the floor above.</p><dl className="gallery-facts">{[['Founded','2009'],['Exhibitions','54'],['Artists','7'],['Address','14 Marlow Yard, London E2']].map(([title,value])=><div key={title}><dt>{title}</dt><dd>{value}</dd></div>)}</dl></section><section className="gallery-timeline" aria-label="Gallery history">{timeline.map(([year,title,text])=><article key={year}><h2>{year}</h2><div><h3>{title}</h3><p>{text}</p></div></article>)}</section></main>;
 }
 
 function Contacts() {
-  return <main className="contacts-view view-enter"><a className="contact-center" href="mailto:info@chriswilliamsart.com">contact us</a><div className="contact-columns"><address><a href="https://maps.google.com/?q=14+Marlow+Yard+London+E2" target="_blank" rel="noreferrer">14 MARLOW YARD<br/>LONDON E2 9AG<br/>BETHNAL GREEN STATION, 5 MIN</a></address><p>WEDNESDAY TO SATURDAY, 11:00 TO 18:00<br/>SUNDAY, 12:00 TO 17:00<br/>ADMISSION FREE</p><div><a href="mailto:info@chriswilliamsart.com">INFO@CHRISWILLIAMSART.COM</a><a href="mailto:sales@chriswilliamsart.com">SALES@CHRISWILLIAMSART.COM</a><a href="mailto:press@chriswilliamsart.com">PRESS@CHRISWILLIAMSART.COM</a></div><div><a href="tel:+442079460318">+44 (0)20 7946 0318</a><p>CHRIS WILLIAMS, DIRECTOR</p></div></div></main>;
+  return <main className="contacts-view view-enter"><a className="contact-center" href="mailto:info@chriswilliamsart.com">contact us</a><div className="contact-columns"><address><a href="https://maps.google.com/?q=14+Marlow+Yard+London+E2" target="_blank" rel="noreferrer">14 MARLOW YARD<br/>LONDON E2 9AG<br/>BETHNAL GREEN STATION, 5 MIN</a></address><p>WEDNESDAY TO SATURDAY, 11:00 TO 18:00<br/>SUNDAY, 12:00 TO 17:00<br/>ADMISSION FREE</p><div><a href="mailto:info@chriswilliamsart.com">INFO@CHRISWILLIAMSART.COM</a><a href="mailto:sales@chriswilliamsart.com">SALES@CHRISWILLIAMSART.COM</a><a href="mailto:press@chriswilliamsart.com">PRESS@CHRISWILLIAMSART.COM</a></div><div><a href="tel:+442079460318">+44 (0)20 7946 0318</a><p>ENDI JAUBASHI, DIRECTOR</p></div></div></main>;
 }
 
 function WorkView({work,back}) {
@@ -152,8 +152,8 @@ function App() {
   useEffect(()=>{if(progress>=1)setReady(true)},[progress]);
   useEffect(()=>{
     if(isField||isList)lastView.current=route;
-    const titles={'/':'Chris Williams Art Gallery','/list':'Index of works','/about':'About','/contacts':'Contacts'};
-    document.title=`${detail?detail.title:titles[route]||'Page not found'} | Chris Williams Art Gallery`;
+    const titles={'/':'Endi Jaubashi Art Gallery','/list':'Index of works','/about':'About','/contacts':'Contacts'};
+    document.title=route==='/' ? 'Endi Jaubashi Art Gallery' : `${detail?detail.title:titles[route]||'Page not found'} | Endi Jaubashi Art Gallery`;
     window.scrollTo(0,0);
     const key=e=>{if(e.key==='Escape'&&detail)location.hash=lastView.current};
     window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);

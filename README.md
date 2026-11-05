@@ -1,6 +1,6 @@
-# Chris Williams Art Gallery
+# Endi Jaubashi Art Gallery
 
-A React + Vite reconstruction of the painting gallery shown in the user's two supplied screen recordings. The previous sculpture portfolio has been replaced.
+A React + Vite painting gallery based on the user's supplied recordings, personalized as Endi Jaubashi Art Gallery with a soft lavender, blue and mint gradient background and a fine dot texture.
 
 ## Run
 
@@ -27,7 +27,7 @@ The tests exercise field rendering, scrolling and dragging, keyboard controls, a
 - `src/Field.jsx`: draggable Canvas artwork field, inertial movement, edge distortion, pointer ripple, and accessible artwork links.
 - `src/main.jsx`: route navigation, index and horizontal artwork browsing, about, contacts, painting details, sound and cursor.
 - `src/data.js`: observed artwork titles, artist text, field coordinates, timeline, and base-aware asset URLs.
-- `src/style.css`: grid, responsive page layouts, locally hosted font, transitions, navigation, and reference badges.
+- `src/style.css`: gradient background, dot texture, responsive page layouts, locally hosted font, transitions, navigation, and reference badges.
 - `public/paintings/`: 15 painting images extracted from the supplied recordings.
 - `docs/reference-review.md`: frame analysis, observed behavior, asset provenance, and known gaps.
 

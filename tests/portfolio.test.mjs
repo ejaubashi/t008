@@ -72,7 +72,7 @@ test('mobile pages fit the viewport and recovered artwork assets load',async({pa
  await page.setViewportSize({width:390,height:844});
  for(const route of ['/','/about','/contacts','/list','/work/cole/black-scarf']){
   await page.goto(`${site}#${route}`);
-  await expect(page.getByRole('link',{name:'Chris Williams Art gallery home'})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Endi Jaubashi Art gallery home'})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  }
  await expect(page.locator('.detail-image img')).toBeVisible();
