@@ -1,43 +1,177 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
+import Field from './Field';
+import RippleImage from './RippleImage';
+import { artists, works, visibleWorks, timeline } from './data';
+import '@fontsource-variable/inter';
 import './style.css';
 
-const artUrl = (filename) => `${import.meta.env.BASE_URL}art/${filename}`;
+function useRoute() {
+  const read = () => location.hash.slice(1) || '/';
+  const [route,setRoute] = useState(read);
+  useEffect(()=>{const update=()=>setRoute(read());window.addEventListener('hashchange',update);return()=>window.removeEventListener('hashchange',update)},[]);
+  return route;
+}
 
-const artworks = [
-  { id:'heron', title:'A moment of stillness', category:'Wildlife', material:'Patinated bronze & copper', dimensions:'Life-size outdoor sculpture', image:artUrl('heron.png'), description:'An exploration of balance and quiet movement. Sweeping metal forms capture the fleeting moment before a heron takes flight.' },
-  { id:'deer', title:'Among the trees', category:'Wildlife', material:'Weathered steel', dimensions:'Outdoor sculpture study', image:artUrl('deer.png'), description:'A woodland silhouette reduced to its essential lines. The open form invites the changing landscape to become part of the sculpture.' },
-  { id:'flow', title:'The shape of a current', category:'Abstract', material:'Polished bronze', dimensions:'Freestanding sculpture study', image:artUrl('flow.png'), description:'An endless conversation between light and surface. A continuous bronze ribbon traces the invisible movement of water.' },
-  { id:'bird', title:'A little possibility', category:'Wildlife', material:'Bronze & natural stone', dimensions:'Small sculpture study', image:artUrl('bird.png'), description:'A small reminder to look closely. This playful bird brings a little of the natural world into an intimate space.' },
-  { id:'whale', title:'Beneath the surface', category:'Commissions', material:'Patinated copper', dimensions:'Site-specific sculpture concept', image:artUrl('whale.png'), description:'A celebration of the ocean and its extraordinary inhabitants. This concept explores the gentle scale and movement of a whale in open water.' },
-  { id:'leaves', title:'A conversation with light', category:'Abstract', material:'Hand-formed copper', dimensions:'Garden sculpture study', image:artUrl('leaves.png'), description:'Organic forms reach toward the sky. Hand-worked copper catches the light and echoes the rhythms of the surrounding garden.' },
-];
-const Arrow = () => <svg className="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg>;
-function App(){
-  const [filter,setFilter]=useState('All work');
-  const [selected,setSelected]=useState(null);
-  const [menu,setMenu]=useState(false);
-  const [formStatus,setFormStatus]=useState('');
-  const [inquiry,setInquiry]=useState('');
-  const dialog=useRef(null);
-  const closeButton=useRef(null);
-  const trigger=useRef(null);
-  useEffect(()=>{ if(selected){trigger.current=document.activeElement;dialog.current.showModal();closeButton.current.focus();document.body.style.overflow='hidden';}else{dialog.current.close();document.body.style.overflow='';trigger.current?.focus();} return()=>{document.body.style.overflow='';}; },[selected]);
-  function navigate(){setMenu(false)}
-  function inquire(art){setInquiry(`I'm interested in “${art.title}”.`);setSelected(null);setTimeout(()=>document.getElementById('contact').scrollIntoView({behavior:'smooth'}),30)}
-  function submit(e){e.preventDefault();const data=new FormData(e.currentTarget);const body=`Name: ${data.get('name')}\nEmail: ${data.get('email')}\n\n${data.get('message')}`;const blob=new Blob([body],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sculpture-inquiry.txt';a.click();URL.revokeObjectURL(a.href);setFormStatus('Your inquiry has been saved as a text file. This demo does not send messages.');}
+function TextLink({ children, href, active, ...props }) {
+  const [text,setText] = useState(children);
+  const timer = useRef(null);
+  useEffect(()=>()=>clearInterval(timer.current),[]);
+  function animate() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    clearInterval(timer.current);
+    let step = 0;
+    timer.current = setInterval(()=>{
+      step++;
+      setText([...children].map((letter,i)=>i < step || letter === ' ' ? letter : Math.floor(Math.random()*10)).join(''));
+      if(step >= children.length){clearInterval(timer.current);setText(children)}
+    },24);
+  }
+  return <a href={href} className={active?'is-current':''} aria-current={active?'page':undefined} aria-label={children} onMouseEnter={animate} {...props}>{text}</a>;
+}
+
+function Logo() {
+  return <a className="gallery-logo" href="#/" aria-label="Chris Williams Art gallery home"><svg viewBox="0 0 48 32" aria-hidden="true"><path d="M16 0A16 16 0 0 0 16 32Z M19 0H32L25 32Z M34 0H48L41 32Z" fill="currentColor"/></svg><span>Chris Williams<span>Art gallery</span></span></a>;
+}
+
+function ReferenceBadges() {
+  return <div className="reference-badges" aria-hidden="true"><div className="css-award" title="Badge reproduced from the reference design"><svg viewBox="0 0 80 80"><defs><path id="award-ring" d="M40,40m-29,0a29,29 0 1,1 58,0a29,29 0 1,1 -58,0"/></defs><circle cx="40" cy="40" r="40"/><text><textPath href="#award-ring" startOffset="6%">WEBSITE AWARDS · NOMINEE · </textPath></text><path d="m26 38 14-12 14 12H26m0 6h28l-14 10Z" fill="white"/><text className="award-word" x="40" y="43" textAnchor="middle">CSSDA</text></svg></div><div className="awwwards"><b>W.</b><span>Nominee</span></div></div>;
+}
+
+function useSound() {
+  const [enabled,setEnabled] = useState(false);
+  const audio = useRef(null);
+  useEffect(()=>()=>{audio.current?.close()},[]);
+  async function toggle() {
+    if(enabled){await audio.current?.suspend();setEnabled(false);return}
+    try {
+      if(!audio.current){
+        const Audio = window.AudioContext || window.webkitAudioContext;
+        if(!Audio) return;
+        const context = new Audio(); audio.current=context;
+        const volume=context.createGain();volume.gain.value=0.018;volume.connect(context.destination);
+        [130.81,196,261.63].forEach((frequency,index)=>{
+          const tone=context.createOscillator();tone.type='sine';tone.frequency.value=frequency;
+          const level=context.createGain();level.gain.value=0.28/(index+1);tone.connect(level);level.connect(volume);tone.start();
+        });
+      }
+      await audio.current.resume();setEnabled(true);
+    } catch { setEnabled(false); }
+  }
+  return [enabled,toggle];
+}
+
+function ListView({ selection }) {
+  const [selected,setSelected] = useState(selection.current);
+  const rail = useRef(null);
+  const drag = useRef(null);
+  const skipClick = useRef(false);
+  const programmatic = useRef(false);
+  const timeout = useRef(null);
+  const work = works.find(item=>item.number===selected) || works[0];
+  const artist = artists[work.artist];
+  const previewWorks = visibleWorks.filter(item=>item.artist===work.artist);
+  useEffect(()=>()=>clearTimeout(timeout.current),[]);
+
+  const select = number => {
+    setSelected(number);
+    const next = works.find(item=>item.number===number);
+    if(next.image){
+      programmatic.current=true;
+      requestAnimationFrame(()=>{
+        const slide=rail.current?.querySelector(`[data-number="${number}"]`);
+        if(slide) rail.current.scrollTo({left:slide.offsetLeft - rail.current.offsetLeft,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+        clearTimeout(timeout.current);timeout.current=setTimeout(()=>{programmatic.current=false},600);
+      });
+    }
+  };
+  useEffect(() => { selection.current = selected; }, [selected, selection]);
+  useEffect(() => { select(selection.current); }, []);
+  const scroll = () => {
+    if(programmatic.current || !rail.current) return;
+    const slides=[...rail.current.querySelectorAll('.rail-work')];
+    if(!slides.length)return;
+    const edge=rail.current.getBoundingClientRect().left;
+    const closest=slides.reduce((a,b)=>Math.abs(a.getBoundingClientRect().left-edge)<Math.abs(b.getBoundingClientRect().left-edge)?a:b);
+    setSelected(Number(closest.dataset.number));
+  };
+  function pointerDown(e){if(e.button!==0)return;skipClick.current=false;drag.current={x:e.clientX,scroll:rail.current.scrollLeft};}
+  function pointerMove(e){if(!drag.current)return;const dx=e.clientX-drag.current.x;if(Math.abs(dx)>5)skipClick.current=true;rail.current.scrollLeft=drag.current.scroll-dx;}
+  function pointerUp(){drag.current=null}
+  useEffect(()=>{window.addEventListener('pointerup',pointerUp);return()=>window.removeEventListener('pointerup',pointerUp)},[]);
+  return <main className="list-view view-enter" aria-label="Index of works">
+    <div className="work-index"><div className="index-head"><span>number</span><span>project</span><span>artist</span></div><div className="index-rows">{works.map(item=><div className={`index-row ${item.number===selected?'is-selected':''}`} key={item.number}><button className="index-select" aria-label={`Preview ${item.title}`} aria-pressed={item.number===selected} onClick={()=>select(item.number)} onFocus={()=>select(item.number)}><span>{String(item.number).padStart(2,'0')}</span><span>{item.title}</span><span>{artists[item.artist].name}</span></button></div>)}</div></div>
+    <section className="artist-preview" aria-label={`${artist.name} artworks`}><div className="artist-heading"><div><h1>{artist.name}</h1>{artist.subtitle&&<p>{artist.subtitle}</p>}</div><div className="artist-description">{artist.description&&<p>{artist.description}</p>}{artist.born&&<dl><div><dt>Born</dt><dd>{artist.born}</dd></div><div><dt>Lives in</dt><dd>{artist.lives}</dd></div><div><dt>With the gallery</dt><dd>{artist.since}</dd></div></dl>}</div></div>
+      {work.image && previewWorks.length ? <div className="art-rail" ref={rail} onScroll={scroll} onPointerDown={pointerDown} onPointerMove={pointerMove} onDragStart={e=>e.preventDefault()} onClickCapture={e=>{if(skipClick.current){e.preventDefault();e.stopPropagation();skipClick.current=false}}} onWheel={e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX))rail.current.scrollLeft+=e.deltaY}} tabIndex={0} aria-label="Scroll horizontally to browse paintings" onKeyDown={e=>{if(e.target!==rail.current)return;if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();rail.current.scrollBy({left:e.key==='ArrowRight'?500:-500,behavior:'smooth'})}}}>{previewWorks.map(item=><a key={item.number} className="rail-work" data-number={item.number} href={`#${item.route}`} aria-label={`Open ${item.title}`}><RippleImage work={item}/></a>)}</div> : <div className="reference-unavailable"><span>{work.title}</span><p>This painting is listed in the recording, but its image is not shown.</p></div>}
+    </section>
+  </main>;
+}
+
+function About() {
+  return <main className="about-view view-enter"><section className="about-intro"><p className="muted small-label">About the gallery</p><h1>Chris Williams Art Gallery<br className="wide-break"/> shows contemporary<br className="wide-break"/> painting in East London.</h1><p className="about-description">The gallery opened in 2009 and represents seven painters from the UK and Europe. It holds six solo exhibitions a year in its ground-floor space on Marlow Yard, Bethnal Green, and runs a three-month studio residency on the floor above.</p><dl className="gallery-facts">{[['Founded','2009'],['Exhibitions','54'],['Artists','7'],['Address','14 Marlow Yard, London E2']].map(([title,value])=><div key={title}><dt>{title}</dt><dd>{value}</dd></div>)}</dl></section><section className="gallery-timeline" aria-label="Gallery history">{timeline.map(([year,title,text])=><article key={year}><h2>{year}</h2><div><h3>{title}</h3><p>{text}</p></div></article>)}</section></main>;
+}
+
+function Contacts() {
+  return <main className="contacts-view view-enter"><a className="contact-center" href="mailto:info@chriswilliamsart.com">contact us</a><div className="contact-columns"><address><a href="https://maps.google.com/?q=14+Marlow+Yard+London+E2" target="_blank" rel="noreferrer">14 MARLOW YARD<br/>LONDON E2 9AG<br/>BETHNAL GREEN STATION, 5 MIN</a></address><p>WEDNESDAY TO SATURDAY, 11:00 TO 18:00<br/>SUNDAY, 12:00 TO 17:00<br/>ADMISSION FREE</p><div><a href="mailto:info@chriswilliamsart.com">INFO@CHRISWILLIAMSART.COM</a><a href="mailto:sales@chriswilliamsart.com">SALES@CHRISWILLIAMSART.COM</a><a href="mailto:press@chriswilliamsart.com">PRESS@CHRISWILLIAMSART.COM</a></div><div><a href="tel:+442079460318">+44 (0)20 7946 0318</a><p>CHRIS WILLIAMS, DIRECTOR</p></div></div></main>;
+}
+
+function WorkView({work,back}) {
+  return <main className="work-view view-enter"><a className="detail-image" href={`#${back}`} aria-label="Back to the gallery">{work.image?<img src={work.image} alt={`${work.title} by ${artists[work.artist].name}`} width={work.width} height={work.height}/>:<div className="reference-unavailable"><span>{work.title}</span><p>This painting’s image is not shown in the supplied recordings.</p></div>}</a><div className="work-description"><div><h1>{work.title}</h1><p>{artists[work.artist].name}</p></div><a href={`#${back}`}>back to the gallery</a></div></main>;
+}
+
+function Cursor({detail,contact}) {
+  const ref=useRef(null);
+  useEffect(()=>{
+    const move=e=>{
+      if(e.pointerType==='touch')return;
+      const el=ref.current;if(!el)return;
+      el.style.transform=`translate3d(${e.clientX}px,${e.clientY}px,0)`;
+      el.classList.add('is-visible');
+      el.classList.toggle('is-link',!!e.target.closest('a,button'));
+    };
+    const leave=()=>ref.current?.classList.remove('is-visible');
+    window.addEventListener('pointermove',move);document.addEventListener('pointerleave',leave);
+    return()=>{window.removeEventListener('pointermove',move);document.removeEventListener('pointerleave',leave)};
+  },[]);
+  return <div className={`custom-cursor ${detail?'is-detail':''} ${contact?'is-contact':''}`} ref={ref} aria-hidden="true"><span>{detail?'back to the gallery':contact?'contact us':''}</span></div>;
+}
+
+function App() {
+  const route=useRoute();
+  const lastView=useRef('/');
+  const listSelection=useRef(1);
+  const position=useRef({x:0,y:0});
+  const [progress,setProgress]=useState(0);
+  const [ready,setReady]=useState(false);
+  const [sound,toggleSound]=useSound();
+  const detail=works.find(work=>work.route===route);
+  const isField=route==='/';
+  const isList=route==='/list';
+  const unknown=!isField&&!isList&&!detail&&!['/about','/contacts'].includes(route);
+  const onProgress=useCallback(value=>setProgress(value),[]);
+  useEffect(()=>{if(progress>=1)setReady(true)},[progress]);
+  useEffect(()=>{
+    if(isField||isList)lastView.current=route;
+    const titles={'/':'Chris Williams Art Gallery','/list':'Index of works','/about':'About','/contacts':'Contacts'};
+    document.title=`${detail?detail.title:titles[route]||'Page not found'} | Chris Williams Art Gallery`;
+    window.scrollTo(0,0);
+    const key=e=>{if(e.key==='Escape'&&detail)location.hash=lastView.current};
+    window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
+  },[route,detail,isField,isList]);
   return <>
-    <header className="header"><a className="wordmark" href="#home" aria-label="Chris Williams home">CHRIS WILLIAMS<span>SCULPTURE & WONDER</span></a><button className="menu-toggle" onClick={()=>setMenu(!menu)} aria-expanded={menu} aria-controls="navigation">{menu?'Close −':'Menu +'}</button><nav id="navigation" className={menu?'open':''} aria-label="Main navigation"><a href="#work" onClick={navigate}>Selected work</a><a href="#about" onClick={navigate}>The artist</a><a href="#process" onClick={navigate}>The process</a><a className="nav-contact" href="#contact" onClick={navigate}>Let’s talk <Arrow/></a></nav></header>
-    <main id="home">
-      <section className="intro"><div className="eyebrow"><span className="dot"/>ART INSPIRED BY THE NATURAL WORLD</div><div className="intro-row"><h1>A little wild.<br/>A little <em>wonder.</em></h1><div className="intro-note"><p>Turning a love of nature into<br/>sculpture that feels alive.</p><a href="#work" className="text-link">Explore the work <span aria-hidden="true">↓</span></a></div></div></section>
-      <section className="hero-image" aria-label="Featured bronze heron sculpture"><img src={artUrl('heron.png')} alt="A bronze and copper heron sculpture in a sunlit meadow" fetchPriority="high"/><div className="image-label"><span>THE ART OF LOOKING A LITTLE CLOSER</span><span>01 — A moment of stillness</span></div><a className="round-link" href="#work" aria-label="View selected sculptures">↓</a></section>
-      <section id="work" className="work section"><div className="section-top"><div><span className="eyebrow">01 / SELECTED WORK</span><h2>From the wild.<br/><em>Into the world.</em></h2></div><p>Familiar forms. Unexpected possibilities.<br/>A collection of creatures, curiosities,<br/>and conversations in metal.</p></div><div className="filter-row" role="group" aria-label="Filter sculptures">{['All work','Wildlife','Abstract','Commissions'].map(f=><button key={f} onClick={()=>setFilter(f)} className={filter===f?'active':''} aria-pressed={filter===f}>{f}{f==='All work'&&<sup>06</sup>}</button>)}<span className="result-count" aria-live="polite">{artworks.filter(a=>filter==='All work'||a.category===filter).length} works</span></div><div className="gallery">{artworks.filter(a=>filter==='All work'||a.category===filter).map((art,i)=><button className="art-card" key={art.id} onClick={()=>setSelected(art)}><div className={'art-image art-'+art.id}><img src={art.image} alt={art.title+' — '+art.material} loading="lazy"/><span className="view-work">View sculpture <Arrow/></span></div><div className="art-info"><div><h3>{art.title}</h3><p>{art.material}</p></div><Arrow/></div></button>)}</div><div className="collection-note"><span>Made by hand. Meant to be discovered.</span><span>Each piece tells its own story.</span></div></section>
-      <section id="about" className="about section"><div className="about-art"><img src={artUrl('leaves.png')} alt="An organic copper sculpture study" loading="lazy"/><span className="small-caption">A STUDY IN CURIOSITY</span></div><div className="about-copy"><span className="eyebrow">02 / THE ARTIST</span><h2>A curious mind.<br/>Two working hands.<br/><em>Endless possibilities.</em></h2><p className="large-copy">There’s something extraordinary in the everyday. You just have to stop and look.</p><p>Inspired by the character and movement of the natural world, this collection explores what happens when organic shapes meet the possibilities of metal. A familiar silhouette becomes a new way of seeing.</p><p>From the smallest detail to the largest outdoor piece, the spirit is the same: a sense of curiosity, a touch of playfulness, and a connection to the world around us.</p><a className="text-link" href="#process">Discover the process <Arrow/></a><div className="signature">Chris Williams</div></div></section>
-      <section id="process" className="process section"><div className="section-top"><div><span className="eyebrow">03 / THE PROCESS</span><h2>Imagination.<br/><em>Made tangible.</em></h2></div><p>From a passing thought to a lasting presence.<br/>An idea takes shape, one detail at a time.</p></div><div className="process-grid">{[['01','Observe','It begins outside. A gesture, a silhouette, the way a creature moves through the world.'],['02','Explore','Sketches and small studies transform an impression into a form with a life of its own.'],['03','Create','Metal is shaped, joined, and finished by hand. The material becomes part of the story.']].map(([n,title,copy])=><article key={n}><span className="process-number">{n}</span><h3>{title}</h3><p>{copy}</p></article>)}</div></section>
-      <section id="contact" className="contact section"><div><span className="eyebrow">04 / START A CONVERSATION</span><h2>Something<br/>on your <em>mind?</em></h2><p>A piece for your garden. A sculpture for a special<br className="desktop-break"/> place. Or an idea that’s still taking shape.</p><p className="contact-note">Tell us what you’re imagining.</p></div><form onSubmit={submit}><label>Your name<input name="name" autoComplete="name" placeholder="Alex Morgan" required maxLength={100}/></label><label>Email address<input name="email" type="email" autoComplete="email" placeholder="alex@example.com" required/></label><label>What are you imagining?<textarea name="message" value={inquiry} onChange={e=>setInquiry(e.target.value)} placeholder="A sculpture, a space, a little possibility…" rows={3} required maxLength={5000}/></label><button className="submit" type="submit">Save inquiry <Arrow/></button><p className="form-note">Portfolio demo · Downloads your inquiry; no message is sent.</p><p role="status" className="form-status">{formStatus}</p></form></section>
-    </main>
-    <footer><a className="wordmark" href="#home">CHRIS WILLIAMS<span>SCULPTURE & WONDER</span></a><span>An independent portfolio concept.<br/>Original demonstration imagery and copy.</span><a className="back-top" href="#home">Back to top ↑</a></footer>
-    <dialog ref={dialog} className="art-dialog" onCancel={e=>{e.preventDefault();setSelected(null)}} onClick={e=>{if(e.target===dialog.current)setSelected(null)}} aria-labelledby="art-title"><button ref={closeButton} className="dialog-close" onClick={()=>setSelected(null)} aria-label="Close artwork details">×</button>{selected&&<div className="dialog-grid"><img src={selected.image} alt={selected.title}/><div className="dialog-copy"><span className="eyebrow">{selected.category} / SCULPTURE STUDY</span><h2 id="art-title">{selected.title}</h2><p>{selected.description}</p><dl><dt>Material</dt><dd>{selected.material}</dd><dt>Format</dt><dd>{selected.dimensions}</dd></dl><button className="submit" onClick={()=>inquire(selected)}>Inquire about this piece <Arrow/></button><p className="form-note">Demonstration artwork · Availability on request</p></div></div>}</dialog>
+    <a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus()}}>Skip to gallery content</a>
+    <header className="site-header"><nav aria-label="Main navigation"><TextLink href="#/" active={isField||isList||!!detail}>gallery area</TextLink><TextLink href="#/about" active={route==='/about'}>about</TextLink><TextLink href="#/contacts" active={route==='/contacts'}>contacts</TextLink></nav><Logo/></header>
+    <div id="main-content" tabIndex={-1} className={`page-content ${isField?'field-content':''}`}>
+      {isField&&<Field position={position} onProgress={onProgress}/>}
+      {isList&&<ListView selection={listSelection}/>}{route==='/about'&&<About/>}{route==='/contacts'&&<Contacts/>}
+      {detail&&<WorkView work={detail} back={lastView.current}/>}
+      {unknown&&<main className="not-found"><h1>Page not found</h1><a href="#/">back to the gallery</a></main>}
+    </div>
+    {isField&&!ready&&<div className="loading-screen" role="status" aria-label="Loading gallery">{Math.round(progress*100)}%</div>}
+    <ReferenceBadges/>
+    <footer className="site-footer"><a className="creator-credit" href="https://nklvdsgn.com" target="_blank" rel="noreferrer">created by nklvdsgn.com</a><nav className="view-switch" aria-label="Gallery view"><TextLink href="#/" active={isField||(!!detail&&lastView.current==='/')}>Field</TextLink><TextLink href="#/list" active={isList||(!!detail&&lastView.current==='/list')}>List</TextLink></nav><div className="footer-right"><button className={`sound-toggle ${sound?'is-playing':''}`} onClick={toggleSound} aria-label="Toggle ambient sound" aria-pressed={sound}><span className="sound-bars" aria-hidden="true">{[1,2,3,4,5].map(n=><i key={n}/>)}</span><span>sound</span></button><span>all rights reserved 2026</span></div></footer>
+    <Cursor detail={!!detail} contact={route==='/contacts'}/>
   </>;
 }
+
 createRoot(document.getElementById('root')).render(<App/>);

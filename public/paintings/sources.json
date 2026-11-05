@@ -1,0 +1,152 @@
+[
+  {
+    "number": "01",
+    "reference_frame": "list-a",
+    "crop": [
+      850,
+      387,
+      904,
+      585
+    ]
+  },
+  {
+    "number": "02",
+    "reference_frame": "list-b",
+    "crop": [
+      1013,
+      387,
+      773,
+      585
+    ]
+  },
+  {
+    "number": "03",
+    "reference_frame": "gallery-e",
+    "crop": [
+      1298,
+      254,
+      351,
+      222
+    ]
+  },
+  {
+    "number": "04",
+    "reference_frame": "list-last",
+    "crop": [
+      850,
+      387,
+      741,
+      585
+    ]
+  },
+  {
+    "number": "05",
+    "reference_frame": "gallery-e",
+    "crop": [
+      1326,
+      620,
+      276,
+      184
+    ]
+  },
+  {
+    "number": "06",
+    "reference_frame": "gallery-b",
+    "crop": [
+      405,
+      174,
+      261,
+      155
+    ]
+  },
+  {
+    "number": "19",
+    "reference_frame": "gallery-c",
+    "crop": [
+      1041,
+      313,
+      363,
+      296
+    ]
+  },
+  {
+    "number": "20",
+    "reference_frame": "gallery-b",
+    "crop": [
+      1246,
+      530,
+      435,
+      358
+    ]
+  },
+  {
+    "number": "21",
+    "reference_frame": "gallery-f",
+    "crop": [
+      390,
+      263,
+      330,
+      264
+    ]
+  },
+  {
+    "number": "22",
+    "reference_frame": "gallery-c",
+    "crop": [
+      593,
+      389,
+      282,
+      339
+    ]
+  },
+  {
+    "number": "23",
+    "reference_frame": "portraits",
+    "crop": [
+      1307,
+      235,
+      250,
+      338
+    ]
+  },
+  {
+    "number": "24",
+    "reference_frame": "gallery-d",
+    "crop": [
+      268,
+      461,
+      345,
+      344
+    ]
+  },
+  {
+    "number": "25",
+    "reference_frame": "gallery-d",
+    "crop": [
+      1361,
+      375,
+      230,
+      345
+    ]
+  },
+  {
+    "number": "26",
+    "reference_frame": "gallery-d",
+    "crop": [
+      784,
+      675,
+      212,
+      277
+    ]
+  },
+  {
+    "number": "27",
+    "reference_frame": "detail-final",
+    "crop": [
+      647,
+      209,
+      611,
+      747
+    ]
+  }
+]

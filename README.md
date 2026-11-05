@@ -1,8 +1,8 @@
-# Sculpture portfolio
+# Chris Williams Art Gallery
 
-A responsive React + Vite artist portfolio built in response to the Chris Williams Art reference. It includes an artwork gallery with category filters, accessible artwork dialogs, an artist section, a process section, mobile navigation, and inquiry draft downloads.
+A React + Vite reconstruction of the painting gallery shown in the user's two supplied screen recordings. The previous sculpture portfolio has been replaced.
 
-## Develop
+## Run
 
 Requires Node.js 20.19+ or 22.12+.
 
@@ -11,33 +11,37 @@ npm ci
 npm run dev
 ```
 
-## Verify and build
+## Validate
 
 ```sh
 npm test
 npm run build
-npm run preview
 ```
 
-Browser tests use the Chromium executable at `/usr/bin/chromium`. Adjust `playwright.config.js` for other systems. Vite outputs the static site to `dist/`, which can be deployed to any static host.
+Browser tests use `/usr/bin/chromium` in this cloud environment. Update `playwright.config.js` for another system.
 
-## Content and functionality
+The tests exercise field rendering, scrolling and dragging, keyboard controls, artwork routes, list previews, previous-view restoration, contacts, sound controls, responsive layouts, and artwork asset responses.
 
-- Edit artwork data in `src/main.jsx` and styling in `src/style.css`.
-- Images in `public/art/` are original AI-generated demonstration sculpture images. They do not depict actual works by Chris Williams.
-- The artist text, artwork titles, and descriptions are demonstration content, not verified artist information.
-- The external reference could not be inspected because the cloud network policy blocked its domain. This is an initial independent portfolio concept, not a verified reproduction. Screenshots or access to the reference are needed to match its appearance and content.
-- The contact form downloads a text file with the visitor's inquiry. It does not send an email, store messages on a server, or claim delivery. Connect a real form service before using it for public inquiries.
-- Replace demonstration identity and content with approved information before public release. No publication or deployment is included.
+## Structure
 
-## GitHub Pages deployment
+- `src/Field.jsx`: draggable Canvas artwork field, inertial movement, edge distortion, pointer ripple, and accessible artwork links.
+- `src/main.jsx`: route navigation, index and horizontal artwork browsing, about, contacts, painting details, sound and cursor.
+- `src/data.js`: observed artwork titles, artist text, field coordinates, timeline, and base-aware asset URLs.
+- `src/style.css`: grid, responsive page layouts, locally hosted font, transitions, navigation, and reference badges.
+- `public/paintings/`: 15 painting images extracted from the supplied recordings.
+- `docs/reference-review.md`: frame analysis, observed behavior, asset provenance, and known gaps.
 
-The `main` branch contains source. Pushing to `main` runs `.github/workflows/deploy.yml` to build and deploy with the official GitHub Pages artifact workflow. An initial static build is also retained in `gh-pages`.
+The recordings reveal 27 work titles, but do not show the actual images for works 07–18. Those images are explicitly unavailable, not replaced with generated content. The field effects, typeface, soundtrack, mobile layouts, and content outside the recordings cannot be represented as exact original source reproductions. See the reference review for details.
 
-In repository **Settings → Pages**, select **GitHub Actions** as the build source. Then run **Deploy portfolio to GitHub Pages** from the Actions tab (or push to `main`). This requires repository administration access. The expected address is `https://ejaubashi.github.io/t008/` once GitHub Pages is enabled and its deployment completes.
+## GitHub Pages
 
-To build for that address locally:
+The `main` branch contains source. `.github/workflows/deploy.yml` builds and deploys using the official GitHub Pages artifact workflow. Repository Settings → Pages must use **GitHub Actions** as the source.
+
+Expected deployment address: `https://ejaubashi.github.io/t008/`.
 
 ```sh
 SITE_BASE_PATH=/t008/ npm run build
+SITE_BASE_PATH=/t008/ npm run preview
 ```
+
+All asset paths and local fonts support the `/t008/` subdirectory. Hash routes also support direct links and reloads, for example `/t008/#/about`.
