@@ -5,7 +5,7 @@ const site='http://127.0.0.1:5173/';
 test('field renders reference paintings, supports pan and drag, and opens details',async({page})=>{
  await page.setViewportSize({width:1920,height:911});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(site);
+ await page.goto(`${site}#/field`);
  await expect(page.getByRole('status',{name:'Loading gallery'})).not.toBeVisible();
  const field=page.getByRole('region',{name:'Draggable artwork field'});
  const painting=page.getByRole('link',{name:'The Heath under Storm by Jack Wolfstein',exact:true});
@@ -20,7 +20,7 @@ test('field renders reference paintings, supports pan and drag, and opens detail
  const beforeDrag=await image.boundingBox();
  await page.mouse.move(beforeDrag.x+70,beforeDrag.y+80);await page.mouse.down();
  await page.mouse.move(beforeDrag.x-180,beforeDrag.y-70,{steps:15});await page.mouse.up();
- await expect(page).toHaveURL(site);
+ await expect(page).toHaveURL(`${site}#/field`);
  await expect.poll(async()=> (await image.boundingBox()).x).toBeLessThan(beforeDrag.x-100);
  await field.focus();await page.keyboard.press('Home');
  await expect.poll(async()=>Math.abs((await painting.boundingBox()).y-original.y)).toBeLessThan(2);

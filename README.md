@@ -45,3 +45,14 @@ SITE_BASE_PATH=/t008/ npm run preview
 ```
 
 All asset paths and local fonts support the `/t008/` subdirectory. Hash routes also support direct links and reloads, for example `/t008/#/about`.
+
+
+## Vortex experiment and restore point
+
+The homepage now previews a spiral media gallery with depth, gentle rotation, scroll travel, drag rotation, hover-to-straighten selection, and pause/reset controls. Pausing is preserved when opening an artwork and returning. Automatic motion starts paused when the device requests reduced motion.
+
+The footer switches between **Vortex**, **Field**, and **List**. Choose **Field** (`#/field`) to immediately return to the previous artwork layout, with the Endi Jaubashi branding and gradient background. The original field renderer is unchanged.
+
+The complete version before this experiment is saved at commit `e2174a0` on branch `backup/pre-vortex-e2174a0`. The experiment can be reverted as a separate commit if the previous version is preferred; no history reset is needed.
+
+`src/Vortex.jsx` contains the experimental renderer and controls. Tests cover scroll/drag behavior, keyboard artwork selection, pause persistence, reduced motion, actual browser touch input, and returning to Field/List.

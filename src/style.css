@@ -19,3 +19,18 @@
 .page-content:focus{outline:none}
 
 .ripple-image{display:block;position:relative;height:100%;width:max-content}.ripple-image canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .15s}.ripple-image img{height:100%;width:auto}
+
+/* Vortex experiment. The previous gallery is still available in Field view. */
+.art-vortex{position:fixed;inset:0;overflow:hidden;touch-action:none;outline:none!important}
+.art-vortex>canvas{display:block;position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.vortex-work{position:absolute;left:0;top:0;transform-origin:center;display:block;will-change:transform;outline-offset:5px}
+.vortex-work:focus-visible{outline:2px solid #65548c;box-shadow:0 0 0 5px #fff9}
+.vortex-caption{position:absolute;bottom:134px;left:25px;pointer-events:none;max-width:300px}
+.vortex-caption>span{display:block;font-size:17px;letter-spacing:-.65px;line-height:1.4}
+.vortex-caption small{display:block;font-size:10px;color:#777b89;margin-top:4px;line-height:1.5}
+.vortex-tools{position:absolute;left:24px;bottom:79px;z-index:40;display:flex;align-items:center;gap:15px;background:#ffffffa6;border:1px solid #ffffffd9;border-radius:24px;box-shadow:0 5px 25px #62598108;backdrop-filter:blur(16px);padding:12px 16px}
+.vortex-tools button{font-size:10px;line-height:16px;color:#585568;white-space:nowrap}
+.vortex-tools button:hover{color:#222}.vortex-tools>span{width:1px;height:11px;background:#c8c4d9}
+.vortex-instructions{position:absolute;right:25px;bottom:93px;pointer-events:none;font-size:10px;letter-spacing:.1px;color:#737183}
+.vortex-instructions>span{margin:0 9px;color:#aaa1bc}
+@media(max-width:800px){.vortex-caption{left:19px;bottom:142px;max-width:200px}.vortex-caption>span{font-size:15px}.vortex-caption small{font-size:9px}.vortex-tools{left:18px;bottom:86px;padding:9px 12px;gap:12px}.vortex-tools button{font-size:9px}.vortex-instructions{left:20px;right:auto;bottom:65px;font-size:8px}.view-switch{gap:14px}}

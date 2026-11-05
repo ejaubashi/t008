@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import Field from './Field';
+import Vortex from './Vortex';
 import RippleImage from './RippleImage';
 import { artists, works, visibleWorks, timeline } from './data';
 import '@fontsource-variable/inter';
@@ -141,35 +142,39 @@ function App() {
   const lastView=useRef('/');
   const listSelection=useRef(1);
   const position=useRef({x:0,y:0});
+  const vortexPosition=useRef({phase:0,spin:0});
   const [progress,setProgress]=useState(0);
   const [ready,setReady]=useState(false);
   const [sound,toggleSound]=useSound();
   const detail=works.find(work=>work.route===route);
-  const isField=route==='/';
+  const isField=route==='/field';
+  const isVortex=route==='/'||route==='/vortex';
+  const isGallery=isField||isVortex;
   const isList=route==='/list';
-  const unknown=!isField&&!isList&&!detail&&!['/about','/contacts'].includes(route);
+  const unknown=!isGallery&&!isList&&!detail&&!['/about','/contacts'].includes(route);
   const onProgress=useCallback(value=>setProgress(value),[]);
   useEffect(()=>{if(progress>=1)setReady(true)},[progress]);
   useEffect(()=>{
-    if(isField||isList)lastView.current=route;
-    const titles={'/':'Endi Jaubashi Art Gallery','/list':'Index of works','/about':'About','/contacts':'Contacts'};
+    if(isGallery||isList)lastView.current=route;
+    const titles={'/':'Endi Jaubashi Art Gallery','/field':'Artwork field','/vortex':'Vortex gallery','/list':'Index of works','/about':'About','/contacts':'Contacts'};
     document.title=route==='/' ? 'Endi Jaubashi Art Gallery' : `${detail?detail.title:titles[route]||'Page not found'} | Endi Jaubashi Art Gallery`;
     window.scrollTo(0,0);
     const key=e=>{if(e.key==='Escape'&&detail)location.hash=lastView.current};
     window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
-  },[route,detail,isField,isList]);
+  },[route,detail,isGallery,isList]);
   return <>
     <a className="skip-link" href="#main-content" onClick={e=>{e.preventDefault();document.getElementById('main-content')?.focus()}}>Skip to gallery content</a>
-    <header className="site-header"><nav aria-label="Main navigation"><TextLink href="#/" active={isField||isList||!!detail}>gallery area</TextLink><TextLink href="#/about" active={route==='/about'}>about</TextLink><TextLink href="#/contacts" active={route==='/contacts'}>contacts</TextLink></nav><Logo/></header>
-    <div id="main-content" tabIndex={-1} className={`page-content ${isField?'field-content':''}`}>
+    <header className="site-header"><nav aria-label="Main navigation"><TextLink href="#/" active={isGallery||isList||!!detail}>gallery area</TextLink><TextLink href="#/about" active={route==='/about'}>about</TextLink><TextLink href="#/contacts" active={route==='/contacts'}>contacts</TextLink></nav><Logo/></header>
+    <div id="main-content" tabIndex={-1} className={`page-content ${isGallery?'field-content':''}`}>
       {isField&&<Field position={position} onProgress={onProgress}/>}
+      {isVortex&&<Vortex position={vortexPosition} onProgress={onProgress}/>}
       {isList&&<ListView selection={listSelection}/>}{route==='/about'&&<About/>}{route==='/contacts'&&<Contacts/>}
       {detail&&<WorkView work={detail} back={lastView.current}/>}
       {unknown&&<main className="not-found"><h1>Page not found</h1><a href="#/">back to the gallery</a></main>}
     </div>
-    {isField&&!ready&&<div className="loading-screen" role="status" aria-label="Loading gallery">{Math.round(progress*100)}%</div>}
+    {isGallery&&!ready&&<div className="loading-screen" role="status" aria-label="Loading gallery">{Math.round(progress*100)}%</div>}
     <ReferenceBadges/>
-    <footer className="site-footer"><a className="creator-credit" href="https://nklvdsgn.com" target="_blank" rel="noreferrer">created by nklvdsgn.com</a><nav className="view-switch" aria-label="Gallery view"><TextLink href="#/" active={isField||(!!detail&&lastView.current==='/')}>Field</TextLink><TextLink href="#/list" active={isList||(!!detail&&lastView.current==='/list')}>List</TextLink></nav><div className="footer-right"><button className={`sound-toggle ${sound?'is-playing':''}`} onClick={toggleSound} aria-label="Toggle ambient sound" aria-pressed={sound}><span className="sound-bars" aria-hidden="true">{[1,2,3,4,5].map(n=><i key={n}/>)}</span><span>sound</span></button><span>all rights reserved 2026</span></div></footer>
+    <footer className="site-footer"><a className="creator-credit" href="https://nklvdsgn.com" target="_blank" rel="noreferrer">created by nklvdsgn.com</a><nav className="view-switch" aria-label="Gallery view"><TextLink href="#/" active={isVortex||(!!detail&&['/','/vortex'].includes(lastView.current))}>Vortex</TextLink><TextLink href="#/field" active={isField||(!!detail&&lastView.current==='/field')}>Field</TextLink><TextLink href="#/list" active={isList||(!!detail&&lastView.current==='/list')}>List</TextLink></nav><div className="footer-right"><button className={`sound-toggle ${sound?'is-playing':''}`} onClick={toggleSound} aria-label="Toggle ambient sound" aria-pressed={sound}><span className="sound-bars" aria-hidden="true">{[1,2,3,4,5].map(n=><i key={n}/>)}</span><span>sound</span></button><span>all rights reserved 2026</span></div></footer>
     <Cursor detail={!!detail} contact={route==='/contacts'}/>
   </>;
 }
