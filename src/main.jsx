@@ -36,7 +36,7 @@ function Logo() {
 }
 
 function ReferenceBadges() {
-  return <div className="reference-badges" aria-hidden="true"><div className="css-award" title="Badge reproduced from the reference design"><svg viewBox="0 0 80 80"><defs><path id="award-ring" d="M40,40m-29,0a29,29 0 1,1 58,0a29,29 0 1,1 -58,0"/></defs><circle cx="40" cy="40" r="40"/><text><textPath href="#award-ring" startOffset="6%">WEBSITE AWARDS · NOMINEE · </textPath></text><path d="m26 38 14-12 14 12H26m0 6h28l-14 10Z" fill="white"/><text className="award-word" x="40" y="43" textAnchor="middle">CSSDA</text></svg></div><div className="awwwards"><b>W.</b><span>Nominee</span></div></div>;
+  return <div className="reference-badges" aria-hidden="true"><div className="awwwards"><b>W.</b><span>Nominee</span></div></div>;
 }
 
 function useSound() {
