@@ -32,9 +32,9 @@ Browser tests use the Chromium executable at `/usr/bin/chromium`. Adjust `playwr
 
 ## GitHub Pages deployment
 
-The `main` branch contains source. The `gh-pages` branch contains the static website. Pushing to `main` runs `.github/workflows/deploy.yml` to rebuild and update `gh-pages`.
+The `main` branch contains source. Pushing to `main` runs `.github/workflows/deploy.yml` to build and deploy with the official GitHub Pages artifact workflow. An initial static build is also retained in `gh-pages`.
 
-In repository **Settings → Pages**, select **Deploy from a branch**, then **gh-pages** and **/ (root)**. This requires repository administration access. The expected address is `https://ejaubashi.github.io/t008/` once GitHub Pages is enabled and its deployment completes.
+In repository **Settings → Pages**, select **GitHub Actions** as the build source. Then run **Deploy portfolio to GitHub Pages** from the Actions tab (or push to `main`). This requires repository administration access. The expected address is `https://ejaubashi.github.io/t008/` once GitHub Pages is enabled and its deployment completes.
 
 To build for that address locally:
 
