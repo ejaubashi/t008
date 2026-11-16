@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { artists, visibleWorks } from './data';
 
 const TAU = Math.PI * 2;
+// Reuse the loaded paintings down to subpixel scale, without duplicate links.
+const DEPTH_LAYERS = 7;
+const LAYER_SCALE = 0.36;
 const wrap = value => ((value % 1) + 1) % 1;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -169,17 +172,41 @@ export default function Vortex({ position, onProgress }) {
         return {...item,x,y,sw,sh,depth,active,opacity:fade,rotation:item.angle};
       }).sort((a,b)=>(a.active?2:a.depth)-(b.active?2:b.depth));
 
-      projected.forEach(item => {
-        const {index,x,y,sw,sh,opacity,rotation,image,work,active}=item;
-        const link=links[index];
-        link.style.width=`${sw}px`; link.style.height=`${sh}px`;
-        link.style.transform=`translate3d(${x-sw/2}px,${y-sh/2}px,0) rotate(${rotation}rad)`;
-        link.style.opacity=String(opacity);link.style.pointerEvents=opacity<0.15?'none':'';link.style.zIndex=String(active?30:Math.round(item.depth*20));
-        link.dataset.depth=item.depth.toFixed(3);
+      // Draw distant echoes first. Each complete spiral becomes the next,
+      // smaller layer, continuing below a pixel at the vanishing point.
+      const layers = [];
+      for (let layer = DEPTH_LAYERS - 1; layer >= 0; layer--) {
+        const scale = LAYER_SCALE ** layer;
+        const turn = layer * 1.1;
+        const cos = Math.cos(turn), sin = Math.sin(turn);
+        projected.forEach(item => {
+          if (layer === 0) { layers.push(item); return; }
+          const dx = item.x - centerX, dy = item.y - centerY;
+          // Echoes follow the natural depth size, independent of hover zoom.
+          const sw = size * (0.16 + Math.pow(item.depth,1.45) * 0.84) * scale;
+          layers.push({...item, layer,
+            x: centerX + (dx * cos - dy * sin) * scale,
+            y: centerY + (dx * sin + dy * cos) * scale,
+            sw, sh: sw * item.work.height / item.work.width,
+            rotation: item.rotation + turn, active: false,
+            opacity: clamp(item.depth * 8 + 0.32,0.32,1) *
+              (item.depth > 0.96 ? (1-item.depth)/0.04 : 1)
+          });
+        });
+      }
+      layers.forEach(item => {
+        const {index,x,y,sw,sh,opacity,rotation,image,active,layer=0}=item;
+        if (layer === 0) {
+          const link=links[index];
+          link.style.width=`${sw}px`; link.style.height=`${sh}px`;
+          link.style.transform=`translate3d(${x-sw/2}px,${y-sh/2}px,0) rotate(${rotation}rad)`;
+          link.style.opacity=String(opacity);link.style.pointerEvents=opacity<0.15?'none':'';link.style.zIndex=String(active?30:Math.round(item.depth*20));
+          link.dataset.depth=item.depth.toFixed(3);
+        }
         ctx.save();ctx.translate(x,y);ctx.rotate(rotation);ctx.globalAlpha=opacity;
         if(image){
           ctx.shadowColor=active?'rgba(55,45,90,0.23)':'rgba(55,45,90,0.14)';
-          ctx.shadowBlur=active?24:12;ctx.shadowOffsetY=7;
+          ctx.shadowBlur=(active?24:12) * LAYER_SCALE ** layer;ctx.shadowOffsetY=7 * LAYER_SCALE ** layer;
           ctx.drawImage(image,-sw/2,-sh/2,sw,sh);
           ctx.shadowBlur=0;ctx.shadowOffsetY=0;
         }
