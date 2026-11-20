@@ -24,7 +24,9 @@ test('vortex supports travel, rotation, reset, painting details and the original
  await page.getByRole('button',{name:'Reset view',exact:true}).click();
  await expect.poll(async()=>Math.abs(Number(await gallery.getAttribute('data-travel')))).toBeLessThan(0.002);
  const first=page.getByRole('link',{name:'Before the Squall by Jack Wolfstein',exact:true});
- await first.focus();
+ await gallery.focus();
+ await page.keyboard.press('Tab');
+ await expect(first).toBeFocused();
  await expect.poll(async()=>(await first.boundingBox()).width).toBeGreaterThan(170);
  await page.keyboard.press('Enter');
  await expect(page).toHaveURL(/#\/work\/wolfstein\/before-the-squall$/);
