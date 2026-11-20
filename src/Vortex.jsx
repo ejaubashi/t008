@@ -7,26 +7,27 @@ const distantWorks = visibleWorks.filter((_, index) => index % 2 === 0);
 const wrap = value => ((value % 1) + 1) % 1;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-export default function Vortex({ position, onProgress }) {
+export default function Vortex({ position, sound, onSoundToggle }) {
   const root = useRef(null);
   const scene = useRef(null);
+  const light = useRef(null);
   const engine = useRef(null);
   const hovered = useRef(null);
   const focused = useRef(null);
   const playing = useRef(false);
   const [paused, setPaused] = useState(() => position.current.paused ?? matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const [selected, setSelected] = useState(null);
+  const [imagesReady, setImagesReady] = useState(false);
   playing.current = !paused;
 
   const highlight = (target, work) => {
     if (target === hovered && engine.current?.dragging) return;
     target.current = work;
-    setSelected(focused.current || hovered.current);
   };
 
   useEffect(() => {
     const element = root.current;
     const stage = scene.current;
+    const halo = light.current;
     const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
     let reduced = reducedQuery.matches;
     let width, height, focalLength, frame;
@@ -34,6 +35,8 @@ export default function Vortex({ position, onProgress }) {
     let targetPhase = phase, targetSpin = spin;
     let pointerX = 0, pointerY = 0, parallaxX = 0, parallaxY = 0;
     let drag = null, moved = false, lastTime = 0;
+    let entered = position.current.entered || false;
+    let entranceStart;
     const cards = [
       ...[...stage.querySelectorAll('.vortex-work')].map((node, index) => ({
         node, work: visibleWorks[index], offset: index / visibleWorks.length, distant: false,
@@ -61,14 +64,14 @@ export default function Vortex({ position, onProgress }) {
     observer.observe(element);
 
     // The visible cards and their distant copies share browser-cached images.
-    let loaded = 0;
+    let imagesFinished = 0;
     const pending = [];
     for (const card of cards.filter(card => !card.distant)) {
       const image = card.node.querySelector('img');
       const complete = () => {
         image.removeEventListener('load', complete);
         image.removeEventListener('error', complete);
-        onProgress(++loaded / visibleWorks.length);
+        if (++imagesFinished === visibleWorks.length) setImagesReady(true);
       };
       if (image.complete) complete();
       else {
@@ -92,8 +95,6 @@ export default function Vortex({ position, onProgress }) {
       drag = { x: event.clientX, y: event.clientY, phase: targetPhase, spin: targetSpin };
       engine.current.dragging = true;
       hovered.current = null;
-      setSelected(focused.current);
-      element.classList.add('is-dragging');
     };
     const move = event => {
       if (event.pointerType !== 'touch') {
@@ -114,20 +115,17 @@ export default function Vortex({ position, onProgress }) {
     const up = event => {
       if (!drag) return;
       drag = null; engine.current.dragging = false;
-      element.classList.remove('is-dragging');
       const hit = event.pointerType === 'mouse'
         ? document.elementFromPoint(event.clientX, event.clientY)?.closest('.vortex-work')
         : null;
       hovered.current = visibleWorks.find(work => work.number === Number(hit?.dataset.number)) || null;
-      setSelected(focused.current || hovered.current);
-    };
+      };
     const click = event => {
       if (moved && event.detail > 0 && !event.target.closest('.vortex-tools')) { event.preventDefault(); event.stopPropagation(); }
     };
     const reset = () => {
       targetPhase = 0; targetSpin = 0; pointerX = 0; pointerY = 0; moved = false;
       hovered.current = null;
-      setSelected(focused.current);
     };
     const key = event => {
       if (event.target.closest('.vortex-tools')) return;
@@ -155,7 +153,15 @@ export default function Vortex({ position, onProgress }) {
 
     const render = time => {
       const dt = Math.min((time - (lastTime || time)) / 1000, 0.05); lastTime = time;
-      const idle = playing.current && !hovered.current && !focused.current && !drag && !document.hidden;
+      const ready = imagesFinished === visibleWorks.length;
+      if (ready && entranceStart === undefined) entranceStart = time;
+      const skipReveal = entered || reduced || !playing.current || focused.current || drag;
+      const reveal = skipReveal ? 1 : ready ? clamp((time - entranceStart) / 1050, 0, 1) : 0;
+      const entrance = (1 - reveal) ** 3;
+      if (ready && reveal === 1) entered = true;
+      stage.style.opacity = ready ? String(Math.min(reveal * 2.4, 1)) : '0';
+
+      const idle = ready && entered && playing.current && !hovered.current && !focused.current && !drag && !document.hidden;
       if (idle) {
         targetPhase += dt * 0.018;
         targetSpin += dt * 0.095;
@@ -165,7 +171,8 @@ export default function Vortex({ position, onProgress }) {
       spin += (targetSpin - spin) * easing;
       parallaxX += ((reduced ? 0 : pointerX) - parallaxX) * easing;
       parallaxY += ((reduced ? 0 : pointerY) - parallaxY) * easing;
-      position.current = { phase, spin, paused: !playing.current };
+      halo.style.transform = `translate3d(${parallaxX * 3}px, ${parallaxY * 3}px, 0) rotate(${spin * 0.18}rad) scale(${1 - entrance * 0.2})`;
+      position.current = { phase, spin, paused: !playing.current, entered };
       element.dataset.travel = phase.toFixed(4);
 
       const mobile = width < 650;
@@ -174,13 +181,13 @@ export default function Vortex({ position, onProgress }) {
       for (const card of cards) {
         const progress = wrap(card.offset + phase + 0.034);
         const rise = progress - 0.5;
-        const angle = rise * TAU * TURNS + Math.PI + 0.27 + spin + (card.distant ? 0.7 : 0);
+        const angle = rise * TAU * TURNS + Math.PI + 0.27 + spin - entrance * 0.55 + (card.distant ? 0.7 : 0);
         const side = Math.sin(angle);
         const front = Math.cos(angle);
         const depth = (front + 1) / 2;
         const x = side * radius + parallaxX;
         const y = rise * pitch + height * (0.058 * front - 0.125 * side) + parallaxY;
-        const z = focalLength * (0.48 * front - (card.distant ? 1.65 : 0.09));
+        const z = focalLength * (0.48 * front - (card.distant ? 1.65 : 0.09) - entrance * 0.88);
         const yaw = side * (0.85 + 0.14 * front);
         const tilt = 0.08 - depth * 0.23;
         const roll = side * 0.10;
@@ -210,19 +217,21 @@ export default function Vortex({ position, onProgress }) {
     };
     frame=requestAnimationFrame(render);
     return () => {
-      position.current = { phase, spin, paused: !playing.current };
+      position.current = { phase, spin, paused: !playing.current, entered };
       cancelAnimationFrame(frame);
       observer.disconnect();
       pending.forEach(remove => remove());
       element.removeEventListener('wheel',wheel);element.removeEventListener('pointerdown',down);
+      element.removeEventListener('touchmove', touchMove);
       element.removeEventListener('keydown',key);element.removeEventListener('click',click,true);
       window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
       reducedQuery.removeEventListener('change',preference);
     };
-  },[position,onProgress]);
+  }, [position]);
 
   return <section ref={root} className="art-vortex" aria-label="Vortex artwork gallery" tabIndex={0}>
-    <p className="sr-only">Paintings travel on a helix. Scroll or swipe vertically to travel, drag horizontally to rotate, or use the arrow keys. Tab selects a painting; Enter opens it. Home resets the view. Choose Field at the bottom to return to the previous layout.</p>
+    <div ref={light} className="vortex-light" aria-hidden="true" />
+    {!imagesReady && <p className="sr-only" role="status" aria-label="Loading gallery">Loading gallery</p>}
     <div ref={scene} className="vortex-scene">
       {distantWorks.map(work => (
         <img key={work.number} className="vortex-echo" src={work.image} width={work.width} height={work.height}
@@ -239,8 +248,24 @@ export default function Vortex({ position, onProgress }) {
         </a>
       ))}
     </div>
-    <div className="vortex-caption" aria-live="polite">{selected?<><span>{selected.title}</span><small>{artists[selected.artist].name}</small></>:<><span>Art in orbit.</span><small>{visibleWorks.length} works. A different perspective.</small></>}</div>
-    <div className="vortex-tools"><button type="button" onClick={()=>setPaused(value=>!value)} aria-pressed={paused}>{paused?'Resume motion':'Pause motion'}</button><span aria-hidden="true"/><button type="button" onClick={()=>engine.current?.reset()}>Reset view</button></div>
-    <p className="vortex-instructions">Scroll to travel <span>·</span> Drag to spin</p>
+    <div className="vortex-tools" role="group" aria-label="Gallery controls">
+      <button type="button" aria-label={paused ? 'Resume motion' : 'Pause motion'} aria-pressed={paused}
+        onClick={() => setPaused(value => !value)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          {paused ? <path d="M9 5.5 19 12 9 18.5Z" /> : <path d="M9 5.5v13m6-13v13" />}
+        </svg>
+      </button>
+      <button type="button" aria-label="Reset view" onClick={() => engine.current?.reset()}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 11a8 8 0 1 1 2.3 6.7M4 5v6h6" />
+        </svg>
+      </button>
+      <button type="button" aria-label="Toggle ambient sound" aria-pressed={sound} onClick={onSoundToggle}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9h4l5-4v14l-5-4H4z" />
+          {sound ? <path d="M16 9a4 4 0 0 1 0 6m2-8a7 7 0 0 1 0 10" /> : <path d="m17 10 4 4m0-4-4 4" />}
+        </svg>
+      </button>
+    </div>
   </section>;
 }

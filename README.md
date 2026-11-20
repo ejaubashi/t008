@@ -20,12 +20,12 @@ npm run build
 
 Browser tests use `/usr/bin/chromium` in this cloud environment. Update `playwright.config.js` for another system.
 
-The tests exercise field rendering, scrolling and dragging, keyboard controls, artwork routes, list previews, previous-view restoration, contacts, sound controls, responsive layouts, and artwork asset responses.
+The tests exercise the vortex entrance, depth, scrolling and dragging, keyboard controls, artwork routes, legacy gallery redirects, contacts, sound controls, responsive layouts, and artwork asset responses.
 
 ## Structure
 
-- `src/Field.jsx`: draggable Canvas artwork field, inertial movement, edge distortion, pointer ripple, and accessible artwork links.
-- `src/main.jsx`: route navigation, index and horizontal artwork browsing, about, contacts, painting details, sound and cursor.
+- `src/Vortex.jsx`: full-screen 3D artwork helix, entrance motion, accessible artwork links, and gallery controls.
+- `src/main.jsx`: routes, about, contacts, painting details, sound, and cursor.
 - `src/data.js`: observed artwork titles, artist text, field coordinates, timeline, and base-aware asset URLs.
 - `src/style.css`: gradient background, dot texture, responsive page layouts, locally hosted font, transitions, navigation, and reference badges.
 - `public/paintings/`: 15 painting images extracted from the supplied recordings.
@@ -47,12 +47,8 @@ SITE_BASE_PATH=/t008/ npm run preview
 All asset paths and local fonts support the `/t008/` subdirectory. Hash routes also support direct links and reloads, for example `/t008/#/about`.
 
 
-## Vortex experiment and restore point
+## Gallery entry
 
-The homepage now previews a spiral media gallery with depth, gentle rotation, scroll travel, drag rotation, hover-to-straighten selection, and pause/reset controls. Pausing is preserved when opening an artwork and returning. Automatic motion starts paused when the device requests reduced motion.
+The gallery opens directly on the 3D vortex. The dock contains pause, reset, and sound controls. Reduced motion skips the entrance and starts with automatic rotation paused. Opening a painting and returning preserves the gallery position and motion setting.
 
-The footer switches between **Vortex**, **Field**, and **List**. Choose **Field** (`#/field`) to immediately return to the previous artwork layout, with the Endi Jaubashi branding and gradient background. The original field renderer is unchanged.
-
-The complete version before this experiment is saved at commit `e2174a0` on branch `backup/pre-vortex-e2174a0`. The experiment can be reverted as a separate commit if the previous version is preferred; no history reset is needed.
-
-`src/Vortex.jsx` contains the experimental renderer and controls. Tests cover scroll/drag behavior, keyboard artwork selection, pause persistence, reduced motion, actual browser touch input, and returning to Field/List.
+Old Field and List links resolve to the vortex. The previous gallery layouts are available in the repository history.

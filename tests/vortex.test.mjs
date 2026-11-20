@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 const site='http://127.0.0.1:5173/';
 
-test('vortex supports travel, rotation, reset, painting details and the original field',async({page})=>{
+test('vortex supports travel, rotation, reset and painting details',async({page})=>{
  await page.setViewportSize({width:1440,height:1000});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(site);
@@ -33,12 +33,6 @@ test('vortex supports travel, rotation, reset, painting details and the original
  await expect(page.locator('.detail-image img')).toHaveAttribute('alt','Before the Squall by Jack Wolfstein');
  await page.keyboard.press('Escape');await expect(gallery).toBeVisible();
  await expect(page.getByRole('button',{name:'Resume motion',exact:true})).toBeVisible();
- await page.getByRole('link',{name:'Field',exact:true}).click();
- await expect(page).toHaveURL(/#\/field$/);
- await expect(page.getByRole('region',{name:'Draggable artwork field'})).toBeVisible();
- await page.getByRole('link',{name:'Vortex',exact:true}).click();await expect(gallery).toBeVisible();
- await page.getByRole('link',{name:'List',exact:true}).click();
- await expect(page.getByRole('main',{name:'Index of works'})).toBeVisible();
  expect(errors).toEqual([]);
 });
 
@@ -60,7 +54,7 @@ test('vortex respects reduced motion, fits mobile and supports touch exploration
  await expect.poll(async()=>Number(await gallery.getAttribute('data-travel'))).toBeGreaterThan(0.05);
  // Finish the browser's 300ms touch-gesture recognition before a separate tap.
  await page.waitForTimeout(350);
- await page.getByRole('link',{name:'Field',exact:true}).tap();
- await expect(page.getByRole('region',{name:'Draggable artwork field'})).toBeVisible();
+ await page.getByRole('button',{name:'Reset view',exact:true}).tap();
+ await expect(gallery).toHaveAttribute('data-travel','0.0000');
  await context.close();
 });
