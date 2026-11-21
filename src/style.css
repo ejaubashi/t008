@@ -18,29 +18,32 @@
 
 .page-content:focus{outline:none}
 
-/* The gallery opens on the full-screen artwork scene. */
-.site-header--vortex{justify-content:flex-start}
-.site-header--vortex .gallery-logo>span>span{color:#595467}
-.art-vortex{position:fixed;inset:0;overflow:hidden;touch-action:none}
-.art-vortex:focus-visible{outline-offset:-5px}
+/* Stage lighting for the full-screen gallery. */
+.site-header--vortex{justify-content:flex-start;color:#f2efea}
+.site-header--vortex .gallery-logo>span>span{color:#b7b2ad}
+.site-header--vortex .gallery-logo{filter:drop-shadow(0 1px 6px #0008)}
+.site-header--vortex .gallery-logo:focus-visible{outline-color:#e8d7bc}
+.site-header--vortex~.custom-cursor{mix-blend-mode:difference}
+.site-header--vortex~.custom-cursor:before{background:#fff}
+
+.art-vortex{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
+  touch-action:none;
+  background:
+    radial-gradient(ellipse at 8% -12%,#2c2d31,transparent 62%),
+    radial-gradient(ellipse at 92% 118%,#292521,transparent 59%),
+    #131315;
+}
+.art-vortex:focus-visible{outline:1px solid #e8d7bc;outline-offset:-5px}
 .vortex-light{
   position:absolute;
-  inset:0;
-  margin:auto;
-  width:min(90vw,1080px);
-  height:min(65vw,58svh,640px);
+  inset:-12%;
   pointer-events:none;
-  border-radius:50%;
-  background:radial-gradient(ellipse at 36% 58%,#d9f8f57a,transparent 65%),
-    radial-gradient(ellipse at 64% 42%,#fff4f9b0,transparent 65%);
-}
-.vortex-light::after{
-  content:'';
-  position:absolute;
-  inset:0;
-  border-radius:inherit;
-  background:conic-gradient(from -35deg,transparent 2%,#fff8 14%,transparent 28%,#b9b4e75e 40%,transparent 51%,#fcffffd6 65%,#98cfca65 77%,transparent 91%);
-  mask-image:radial-gradient(ellipse closest-side,transparent 72%,#0003 83%,#000 92%,transparent);
+  background:
+    radial-gradient(ellipse at 38% 34%,#7f8ea027,transparent 61%),
+    radial-gradient(ellipse at 64% 67%,#ac948123,transparent 60%);
 }
 .vortex-scene{
   position:absolute;
@@ -48,12 +51,12 @@
   opacity:0;
   pointer-events:none;
   clip-path:inset(0 0 48px);
-  mask-image:linear-gradient(to bottom,transparent 10px,#000 94px,#000 calc(100% - 115px),transparent calc(100% - 48px));
+  mask-image:linear-gradient(to bottom,transparent 22px,#000 105px,#000 calc(100% - 115px),transparent calc(100% - 48px));
 }
 .vortex-work,.vortex-echo{position:absolute;left:50%;top:50%;display:block;opacity:0;will-change:transform}
 .vortex-work img,.vortex-echo{height:auto;border-radius:5px;user-select:none}
-.vortex-work img{width:100%;pointer-events:none;filter:brightness(var(--vortex-brightness,1));box-shadow:0 10px 25px #38254d33}
-.vortex-work:focus-visible{outline:2px solid #65548c;outline-offset:5px;box-shadow:0 0 0 5px #fff9}
+.vortex-work img{width:100%;pointer-events:none;filter:brightness(var(--vortex-brightness,1));box-shadow:0 0 0 1px #fff2,0 14px 34px #0008}
+.vortex-work:focus-visible{outline:2px solid #e8d7bc;outline-offset:5px}
 .vortex-tools{
   position:absolute;
   z-index:1;
@@ -63,11 +66,11 @@
   display:flex;
   gap:2px;
   padding:4px;
-  border:1px solid #ffffffca;
+  border:1px solid #ffffff2c;
   border-radius:99px;
-  background:#ffffff94;
-  box-shadow:0 10px 34px #3326531a,inset 0 1px 0 #fff;
-  backdrop-filter:blur(18px) saturate(1.25);
+  background:#262527d9;
+  box-shadow:0 8px 28px #0005,inset 0 1px 0 #fff1;
+  backdrop-filter:blur(18px);
 }
 .vortex-tools button{
   display:grid;
@@ -75,10 +78,10 @@
   width:44px;
   height:44px;
   border-radius:50%;
-  color:#302d3c;
+  color:#ede8e2;
   transition:background-color 180ms ease;
 }
-.vortex-tools button:hover,.vortex-tools button[aria-pressed=true]{background:#e2dff2a8}
-.vortex-tools button:focus-visible{outline:2px solid #65548c;outline-offset:0}
+.vortex-tools button:hover,.vortex-tools button[aria-pressed=true]{background:#fff2}
+.vortex-tools button:focus-visible{outline:2px solid #e8d7bc;outline-offset:0}
 .vortex-tools svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 @media(prefers-reduced-motion:reduce){.vortex-light{transform:none!important}}
