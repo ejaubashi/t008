@@ -37,13 +37,20 @@
     #131315;
 }
 .art-vortex:focus-visible{outline:1px solid #e8d7bc;outline-offset:-5px}
+@property --vortex-wash{
+  syntax:'<color>';
+  inherits:false;
+  initial-value:#79643d;
+}
 .vortex-light{
   position:absolute;
   inset:-12%;
   pointer-events:none;
   background:
-    radial-gradient(ellipse at 38% 34%,#7f8ea027,transparent 61%),
-    radial-gradient(ellipse at 64% 67%,#ac948123,transparent 60%);
+    radial-gradient(ellipse at 49% 47%,color-mix(in srgb,var(--vortex-wash) 42%,transparent),transparent 60%),
+    radial-gradient(ellipse at 20% 14%,#8c9bb418,transparent 54%);
+  transition:--vortex-wash 820ms ease;
+
 }
 .vortex-scene{
   position:absolute;
@@ -56,6 +63,16 @@
 .vortex-work,.vortex-echo{position:absolute;left:50%;top:50%;display:block;opacity:0;will-change:transform}
 .vortex-work img,.vortex-echo{height:auto;border-radius:5px;user-select:none}
 .vortex-work img{width:100%;pointer-events:none;filter:brightness(var(--vortex-brightness,1));box-shadow:0 0 0 1px #fff2,0 14px 34px #0008}
+.vortex-work::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border:1px solid color-mix(in srgb,var(--artwork-light,#bcaa88) 60%,#fffbef);
+  border-radius:5px;
+  mask-image:linear-gradient(135deg,#000,#0009 29%,transparent 64%);
+  opacity:var(--vortex-edge,0);
+}
 .vortex-work:focus-visible{outline:2px solid #e8d7bc;outline-offset:5px}
 .vortex-tools{
   position:absolute;

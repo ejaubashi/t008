@@ -3,9 +3,21 @@ import { artists, visibleWorks } from './data';
 
 const TAU = Math.PI * 2;
 const TURNS = 1.7;
+const CENTER = 0.5;
+const OPENING_WORK = 4; // The Heath under Storm
+const openingOffset = CENTER - visibleWorks.findIndex(work => work.number === OPENING_WORK) / visibleWorks.length;
+
+// Each swatch was sampled from the artwork. Only the surrounding light uses it.
+const artworkLight = {
+  1: '#5f6a52', 2: '#4f4619', 3: '#677278', 4: '#79643d',
+  5: '#808875', 6: '#6c653b', 19: '#6d7887', 20: '#7e93a2',
+  21: '#a39384', 22: '#aea990', 23: '#647163', 24: '#7a8d7c',
+  25: '#88805f', 26: '#593c27', 27: '#617448',
+};
 const distantWorks = visibleWorks.filter((_, index) => index % 2 === 0);
 const wrap = value => ((value % 1) + 1) % 1;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const mix = (from, to, amount) => from + (to - from) * amount;
 
 export default function Vortex({ position, sound, onSoundToggle }) {
   const root = useRef(null);
@@ -37,6 +49,7 @@ export default function Vortex({ position, sound, onSoundToggle }) {
     let drag = null, moved = false, lastTime = 0;
     let entered = position.current.entered || false;
     let entranceStart;
+    let litWork;
     const cards = [
       ...[...stage.querySelectorAll('.vortex-work')].map((node, index) => ({
         node, work: visibleWorks[index], offset: index / visibleWorks.length, distant: false,
@@ -45,6 +58,10 @@ export default function Vortex({ position, sound, onSoundToggle }) {
         node, work: distantWorks[index], offset: (index + 0.5) / distantWorks.length, distant: true,
       })),
     ];
+
+    for (const card of cards) {
+      if (!card.distant) card.node.style.setProperty('--artwork-light', artworkLight[card.work.number]);
+    }
 
     const resize = () => {
       width = element.clientWidth;
@@ -119,7 +136,7 @@ export default function Vortex({ position, sound, onSoundToggle }) {
         ? document.elementFromPoint(event.clientX, event.clientY)?.closest('.vortex-work')
         : null;
       hovered.current = visibleWorks.find(work => work.number === Number(hit?.dataset.number)) || null;
-      };
+    };
     const click = event => {
       if (moved && event.detail > 0 && !event.target.closest('.vortex-tools')) { event.preventDefault(); event.stopPropagation(); }
     };
@@ -178,39 +195,57 @@ export default function Vortex({ position, sound, onSoundToggle }) {
       const mobile = width < 650;
       const radius = width * (mobile ? 0.50 : 0.44);
       const pitch = height * (mobile ? 0.91 : 0.84);
+      // The work nearest the spotlight sets the hue until the next one takes over.
+      const leadIndex = Math.round((CENTER - phase - openingOffset) * visibleWorks.length);
+      const wrappedIndex = ((leadIndex % visibleWorks.length) + visibleWorks.length) % visibleWorks.length;
+      const leadWork = visibleWorks[wrappedIndex];
+      const lightWork = focused.current ?? leadWork;
+      if (lightWork !== litWork) {
+        halo.style.setProperty('--vortex-wash', artworkLight[lightWork.number]);
+        litWork = lightWork;
+      }
+
       for (const card of cards) {
-        const progress = wrap(card.offset + phase + 0.034);
-        const rise = progress - 0.5;
+        const progress = wrap(card.offset + phase + openingOffset);
+        const rise = progress - CENTER;
         const angle = rise * TAU * TURNS + Math.PI + 0.27 + spin - entrance * 0.55 + (card.distant ? 0.7 : 0);
         const side = Math.sin(angle);
         const front = Math.cos(angle);
         const depth = (front + 1) / 2;
-        const x = side * radius + parallaxX;
-        const y = rise * pitch + height * (0.058 * front - 0.125 * side) + parallaxY;
-        const z = focalLength * (0.48 * front - (card.distant ? 1.65 : 0.09) - entrance * 0.88);
-        const yaw = side * (0.85 + 0.14 * front);
-        const tilt = 0.08 - depth * 0.23;
-        const roll = side * 0.10;
+        const distance = rise * visibleWorks.length;
+        const falloff = card.distant ? 0 : clamp(1 - Math.abs(distance) / 0.95, 0, 1);
+        const spotlight = falloff ** 2 * (3 - 2 * falloff);
+        const x = mix(side * radius, -distance * width * 0.36, spotlight) + parallaxX;
+        const y = mix(rise * pitch + height * (0.058 * front - 0.125 * side), -height * 0.045, spotlight) + parallaxY;
+        const z = focalLength * (mix(0.48 * front - (card.distant ? 1.65 : 0.09), 0.2, spotlight) - entrance * 0.88);
+        const yaw = mix(side * (0.85 + 0.14 * front), -distance * 0.16, spotlight);
+        const tilt = mix(0.08 - depth * 0.23, -0.035, spotlight);
+        const roll = side * 0.10 * (1 - spotlight);
+        const artworkRatio = card.work.width / card.work.height;
+        const leadWidth = Math.min(width * (mobile ? 0.64 : 0.36), height * 0.52 * artworkRatio, Math.max(315, card.work.width), 510);
+        // Account for perspective so the lead has a readable width as it reaches the light.
+        const scale = mix(0.82, leadWidth * 0.8 / card.width, spotlight);
         // Fade at both ends as each panel wraps back into the helix.
         const endFade = clamp(Math.min(progress, 1 - progress) / 0.15, 0, 1);
-        const opacity = endFade * (card.distant ? 0.17 : 0.89 + 0.11 * depth);
+        const opacity = endFade * (card.distant ? 0.105 : mix(0.66 + depth * 0.20, 1, spotlight));
         const hasFocus = !card.distant && focused.current === card.work;
 
         if (hasFocus) {
           // Bring keyboard selection into view even if its orbit is offscreen.
-          const focusWidth = Math.min(width * 0.70, Math.max(card.width, 195));
+          const focusWidth = Math.min(width * 0.70, Math.max(card.width, leadWidth * spotlight, 195));
           card.node.style.transform = `translate(-50%, -50%) scale(${focusWidth / card.width})`;
-          card.node.style.zIndex = '100';
+          card.node.style.zIndex = '200';
         } else {
-          card.node.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, ${z.toFixed(2)}px) rotateY(${yaw.toFixed(4)}rad) rotateX(${tilt.toFixed(4)}rad) rotateZ(${roll.toFixed(4)}rad)`;
-          card.node.style.zIndex = String(Math.round(depth * 45) + (card.distant ? 0 : 50));
+          card.node.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, ${z.toFixed(2)}px) rotateY(${yaw.toFixed(4)}rad) rotateX(${tilt.toFixed(4)}rad) rotateZ(${roll.toFixed(4)}rad) scale(${scale.toFixed(3)})`;
+          card.node.style.zIndex = String(Math.round(depth * 45 + spotlight * 74) + (card.distant ? 0 : 50));
         }
 
         card.node.style.opacity = hasFocus ? '1' : opacity.toFixed(3);
         if (!card.distant) {
           card.node.style.pointerEvents = hasFocus || opacity > 0.15 ? 'auto' : 'none';
-          const brightness = hasFocus || hovered.current === card.work ? 1 : 0.78 + depth * 0.22;
+          const brightness = hasFocus || hovered.current === card.work ? 1 : mix(0.70 + depth * 0.18, 1, spotlight);
           card.node.style.setProperty('--vortex-brightness', brightness.toFixed(3));
+          card.node.style.setProperty('--vortex-edge', hasFocus ? '1' : spotlight.toFixed(3));
         }
       }
       frame=requestAnimationFrame(render);
